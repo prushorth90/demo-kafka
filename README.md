@@ -11,6 +11,12 @@ A beginner-friendly Java 21 Spring Boot backend for learning Apache Kafka. The p
 - `model`: Contains the data objects used by the application.
 - `config`: Holds simple application and Kafka configuration when it is introduced.
 
+## Order events
+
+`OrderCreatedEvent` is the message published to Kafka when a user creates an order. It contains the order ID, item, quantity, and creation time.
+
+Event-driven systems publish events instead of directly calling another service or class so the order creator does not need to know which components will react. Multiple consumers can process the same event independently, and temporarily unavailable consumers can catch up from Kafka later.
+
 ## Start Kafka
 
 Start the local single-node Kafka broker in KRaft mode:
