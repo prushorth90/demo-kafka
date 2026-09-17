@@ -1,6 +1,6 @@
 # kafka-order-demo
 
-A beginner-friendly Java 21 Spring Boot backend for learning Apache Kafka. The project currently includes Spring Web and Spring for Apache Kafka without a database, authentication, or custom Kafka configuration.
+A beginner-friendly Java 21 Spring Boot and React application for learning Apache Kafka. Orders are stored in memory, so they reset whenever the backend restarts.
 
 ## Packages
 
@@ -46,6 +46,18 @@ Then request `http://localhost:8080/api/health`. The response is:
 ```
 
 Kafka does not need to be running for the health endpoint.
+
+## Run the frontend
+
+In another terminal, install the frontend dependencies and start the Vite development server:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Keep Kafka and the Spring Boot application running to place orders and see their status update automatically.
 
 ## Run the tests
 

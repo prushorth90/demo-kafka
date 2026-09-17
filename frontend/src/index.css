@@ -1,0 +1,45 @@
+:root {
+  --ink: #18231f;
+  --muted: #65706b;
+  --canvas: #f3f4ef;
+  --surface: #ffffff;
+  --table-head: #f7f8f4;
+  --border: #d9ddd7;
+  --accent: #d24b35;
+  --accent-soft: #f8d8d1;
+  --green: #42a66b;
+  --green-dark: #237847;
+  --green-soft: #dff2e6;
+  --received: #4865a8;
+  --received-soft: #e4e9f6;
+  --processing: #996215;
+  --processing-soft: #f7e9c7;
+  --danger: #a62f29;
+  --danger-soft: #f9e3e0;
+  --sans: 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --heading: 'Avenir Next Condensed', 'Trebuchet MS', sans-serif;
+  --mono: 'SFMono-Regular', Consolas, monospace;
+
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(24, 35, 31, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 35, 31, 0.035) 1px, transparent 1px),
+    var(--canvas);
+  background-size: 32px 32px;
+  font: 16px/1.5 var(--sans);
+  letter-spacing: 0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
