@@ -20,7 +20,7 @@ class OrderProducerTest {
 
         producer.publishOrder(event);
 
-        verify(kafkaTemplate).send(OrderProducer.ORDERS_CREATED_TOPIC, event);
-    verify(eventLogService).record("Producer published abc-123 to orders.created");
+        verify(kafkaTemplate).send(OrderProducer.ORDERS_CREATED_TOPIC, "abc-123", event);
+        verify(eventLogService).record("Producer published abc-123 to orders.created");
     }
 }

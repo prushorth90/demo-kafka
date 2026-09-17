@@ -24,7 +24,7 @@ class OrderConsumerTest {
 
     @Test
     void listensToOrdersCreatedAsOrderProcessingGroup() throws NoSuchMethodException {
-        Method listenerMethod = OrderConsumer.class.getMethod("processOrder", OrderCreatedEvent.class);
+        Method listenerMethod = OrderConsumer.class.getMethod("processOrder", OrderCreatedEvent.class, int.class);
         KafkaListener listener = listenerMethod.getAnnotation(KafkaListener.class);
 
         assertThat(listener.topics()).containsExactly(OrderProducer.ORDERS_CREATED_TOPIC);
@@ -39,19 +39,19 @@ class OrderConsumerTest {
         OrderCreatedEvent event = new OrderCreatedEvent("abc-123", "Burger", 2, 1_750_000_000_000L);
         Instant startedAt = Instant.now();
 
-        consumer.processOrder(event);
+        consumer.processOrder(event, 2);
 
         assertThat(Duration.between(startedAt, Instant.now())).isGreaterThanOrEqualTo(Duration.ofMillis(900));
         assertThat(output)
-                .contains("Received order abc-123 from Kafka")
+            .contains("Received order abc-123 from partition 2")
                 .contains("Processing item Burger for order abc-123")
                 .contains("Completed order abc-123");
-            var orderedUpdates = inOrder(orderStore);
-            orderedUpdates.verify(orderStore).updateStatus("abc-123", OrderStatus.Status.PROCESSING);
-            orderedUpdates.verify(orderStore).updateStatus("abc-123", OrderStatus.Status.COMPLETED);
-            var orderedEvents = inOrder(eventLogService);
-            orderedEvents.verify(eventLogService).record("Kafka consumer received abc-123");
-            orderedEvents.verify(eventLogService).record("Order abc-123 processing");
-            orderedEvents.verify(eventLogService).record("Order abc-123 completed");
+        var orderedUpdates = inOrder(orderStore);
+        orderedUpdates.verify(orderStore).updateStatus("abc-123", OrderStatus.Status.PROCESSING);
+        orderedUpdates.verify(orderStore).updateStatus("abc-123", OrderStatus.Status.COMPLETED);
+        var orderedEvents = inOrder(eventLogService);
+        orderedEvents.verify(eventLogService).record("Kafka consumer received abc-123");
+        orderedEvents.verify(eventLogService).record("Order abc-123 processing");
+        orderedEvents.verify(eventLogService).record("Order abc-123 completed");
     }
 }

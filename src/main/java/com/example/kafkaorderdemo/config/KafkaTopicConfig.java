@@ -12,7 +12,7 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic ordersCreatedTopic() {
         return TopicBuilder.name(OrderProducer.ORDERS_CREATED_TOPIC)
-                .partitions(1)
+            .partitions(3)
                 .replicas(1)
                 .build();
     }

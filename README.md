@@ -17,6 +17,12 @@ A beginner-friendly Java 21 Spring Boot and React application for learning Apach
 
 Event-driven systems publish events instead of directly calling another service or class so the order creator does not need to know which components will react. Multiple consumers can process the same event independently, and temporarily unavailable consumers can catch up from Kafka later.
 
+## Kafka partitions
+
+A Kafka partition is an ordered section of a topic. The `orders.created` topic has three partitions, so Kafka can spread order events across three independent ordered logs.
+
+Multiple partitions help Kafka scale because consumers in the same consumer group can process different partitions in parallel. Each order event uses its `orderId` as the message key. Kafka consistently maps the same key to the same partition, so any related events that reuse that order ID will stay together and preserve their order within that partition.
+
 ## Start Kafka
 
 Start the local single-node Kafka broker in KRaft mode:

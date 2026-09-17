@@ -28,7 +28,7 @@ public class OrderProducer {
         LOGGER.info("Publishing order {} to Kafka", event.orderId());
 
         // send() starts an asynchronous publish; the configured serializer converts the event to JSON.
-        kafkaTemplate.send(ORDERS_CREATED_TOPIC, event);
+        kafkaTemplate.send(ORDERS_CREATED_TOPIC, event.orderId(), event);
         eventLogService.record("Producer published " + event.orderId() + " to " + ORDERS_CREATED_TOPIC);
     }
 }
