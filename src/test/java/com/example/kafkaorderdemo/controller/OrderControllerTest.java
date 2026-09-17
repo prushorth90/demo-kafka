@@ -1,7 +1,9 @@
 package com.example.kafkaorderdemo.controller;
 
 import com.example.kafkaorderdemo.model.OrderCreatedEvent;
+import com.example.kafkaorderdemo.model.OrderStatus;
 import com.example.kafkaorderdemo.producer.OrderProducer;
+import com.example.kafkaorderdemo.service.OrderStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -9,9 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+import java.util.Optional;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -24,6 +31,9 @@ class OrderControllerTest {
 
     @MockitoBean
     private OrderProducer orderProducer;
+
+    @MockitoBean
+    private OrderStore orderStore;
 
     @Test
     void createsAndPublishesOrder() throws Exception {
@@ -38,7 +48,41 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.quantity").value(2))
                 .andExpect(jsonPath("$.createdAt").isNumber());
 
+    verify(orderStore).save(argThat(event -> hasOrderDetails(event, "Burger", 2)));
         verify(orderProducer).publishOrder(argThat(event -> hasOrderDetails(event, "Burger", 2)));
+    }
+
+    @Test
+    void returnsAllOrders() throws Exception {
+    when(orderStore.findAll()).thenReturn(List.of(
+        new OrderStatus("abc-123", "Burger", 2, OrderStatus.Status.PROCESSING)
+    ));
+
+    mockMvc.perform(get("/api/orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].orderId").value("abc-123"))
+        .andExpect(jsonPath("$[0].status").value("PROCESSING"));
+    }
+
+    @Test
+    void returnsOrderById() throws Exception {
+    when(orderStore.findById("abc-123")).thenReturn(Optional.of(
+        new OrderStatus("abc-123", "Burger", 2, OrderStatus.Status.COMPLETED)
+    ));
+
+    mockMvc.perform(get("/api/orders/abc-123"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.item").value("Burger"))
+        .andExpect(jsonPath("$.quantity").value(2))
+        .andExpect(jsonPath("$.status").value("COMPLETED"));
+    }
+
+    @Test
+    void returnsNotFoundForUnknownOrder() throws Exception {
+    when(orderStore.findById("missing")).thenReturn(Optional.empty());
+
+    mockMvc.perform(get("/api/orders/missing"))
+        .andExpect(status().isNotFound());
     }
 
     @Test
