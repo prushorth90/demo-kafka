@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: kafka-order-demo
+  kafka:
+    bootstrap-servers: localhost:9092
