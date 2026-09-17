@@ -4,6 +4,7 @@ import com.example.kafkaorderdemo.model.CreateOrderRequest;
 import com.example.kafkaorderdemo.model.OrderCreatedEvent;
 import com.example.kafkaorderdemo.model.OrderStatus;
 import com.example.kafkaorderdemo.producer.OrderProducer;
+import com.example.kafkaorderdemo.service.EventLogService;
 import com.example.kafkaorderdemo.service.OrderStore;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,10 +26,12 @@ public class OrderController {
 
     private final OrderProducer orderProducer;
     private final OrderStore orderStore;
+    private final EventLogService eventLogService;
 
-    public OrderController(OrderProducer orderProducer, OrderStore orderStore) {
+    public OrderController(OrderProducer orderProducer, OrderStore orderStore, EventLogService eventLogService) {
         this.orderProducer = orderProducer;
         this.orderStore = orderStore;
+        this.eventLogService = eventLogService;
     }
 
     @PostMapping
@@ -41,6 +44,7 @@ public class OrderController {
                 System.currentTimeMillis()
         );
 
+            eventLogService.record("REST API received order " + event.orderId());
         orderStore.save(event);
         orderProducer.publishOrder(event);
         return event;

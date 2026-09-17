@@ -1,6 +1,7 @@
 package com.example.kafkaorderdemo.producer;
 
 import com.example.kafkaorderdemo.model.OrderCreatedEvent;
+import com.example.kafkaorderdemo.service.EventLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -16,9 +17,11 @@ public class OrderProducer {
 
     // KafkaTemplate is Spring's helper for publishing messages to Kafka.
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
+    private final EventLogService eventLogService;
 
-    public OrderProducer(KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate) {
+    public OrderProducer(KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate, EventLogService eventLogService) {
         this.kafkaTemplate = kafkaTemplate;
+        this.eventLogService = eventLogService;
     }
 
     public void publishOrder(OrderCreatedEvent event) {
@@ -26,5 +29,6 @@ public class OrderProducer {
 
         // send() starts an asynchronous publish; the configured serializer converts the event to JSON.
         kafkaTemplate.send(ORDERS_CREATED_TOPIC, event);
+        eventLogService.record("Producer published " + event.orderId() + " to " + ORDERS_CREATED_TOPIC);
     }
 }

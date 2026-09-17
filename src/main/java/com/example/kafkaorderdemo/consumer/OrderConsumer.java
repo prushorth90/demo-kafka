@@ -3,6 +3,7 @@ package com.example.kafkaorderdemo.consumer;
 import com.example.kafkaorderdemo.model.OrderCreatedEvent;
 import com.example.kafkaorderdemo.model.OrderStatus;
 import com.example.kafkaorderdemo.producer.OrderProducer;
+import com.example.kafkaorderdemo.service.EventLogService;
 import com.example.kafkaorderdemo.service.OrderStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +16,11 @@ public class OrderConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderConsumer.class);
 
     private final OrderStore orderStore;
+    private final EventLogService eventLogService;
 
-    public OrderConsumer(OrderStore orderStore) {
+    public OrderConsumer(OrderStore orderStore, EventLogService eventLogService) {
         this.orderStore = orderStore;
+        this.eventLogService = eventLogService;
     }
 
     // A consumer reads messages from Kafka; the producer does not call it directly because Kafka
@@ -27,7 +30,9 @@ public class OrderConsumer {
     @KafkaListener(topics = OrderProducer.ORDERS_CREATED_TOPIC, groupId = "order-processing-group")
     public void processOrder(OrderCreatedEvent event) {
         LOGGER.info("Received order {} from Kafka", event.orderId());
+        eventLogService.record("Kafka consumer received " + event.orderId());
         orderStore.updateStatus(event.orderId(), OrderStatus.Status.PROCESSING);
+        eventLogService.record("Order " + event.orderId() + " processing");
         LOGGER.info("Processing item {} for order {}", event.item(), event.orderId());
 
         try {
@@ -38,6 +43,7 @@ public class OrderConsumer {
         }
 
         orderStore.updateStatus(event.orderId(), OrderStatus.Status.COMPLETED);
+    eventLogService.record("Order " + event.orderId() + " completed");
         LOGGER.info("Completed order {}", event.orderId());
     }
 }

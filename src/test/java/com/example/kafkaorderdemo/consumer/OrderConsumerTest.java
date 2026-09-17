@@ -3,6 +3,7 @@ package com.example.kafkaorderdemo.consumer;
 import com.example.kafkaorderdemo.model.OrderCreatedEvent;
 import com.example.kafkaorderdemo.model.OrderStatus;
 import com.example.kafkaorderdemo.producer.OrderProducer;
+import com.example.kafkaorderdemo.service.EventLogService;
 import com.example.kafkaorderdemo.service.OrderStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +34,8 @@ class OrderConsumerTest {
     @Test
     void processesOrderAfterShortDelay(CapturedOutput output) {
         OrderStore orderStore = mock(OrderStore.class);
-        OrderConsumer consumer = new OrderConsumer(orderStore);
+        EventLogService eventLogService = mock(EventLogService.class);
+        OrderConsumer consumer = new OrderConsumer(orderStore, eventLogService);
         OrderCreatedEvent event = new OrderCreatedEvent("abc-123", "Burger", 2, 1_750_000_000_000L);
         Instant startedAt = Instant.now();
 
@@ -47,5 +49,9 @@ class OrderConsumerTest {
             var orderedUpdates = inOrder(orderStore);
             orderedUpdates.verify(orderStore).updateStatus("abc-123", OrderStatus.Status.PROCESSING);
             orderedUpdates.verify(orderStore).updateStatus("abc-123", OrderStatus.Status.COMPLETED);
+            var orderedEvents = inOrder(eventLogService);
+            orderedEvents.verify(eventLogService).record("Kafka consumer received abc-123");
+            orderedEvents.verify(eventLogService).record("Order abc-123 processing");
+            orderedEvents.verify(eventLogService).record("Order abc-123 completed");
     }
 }

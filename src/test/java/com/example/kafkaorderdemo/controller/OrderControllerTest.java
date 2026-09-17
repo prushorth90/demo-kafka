@@ -4,6 +4,7 @@ import com.example.kafkaorderdemo.config.WebConfig;
 import com.example.kafkaorderdemo.model.OrderCreatedEvent;
 import com.example.kafkaorderdemo.model.OrderStatus;
 import com.example.kafkaorderdemo.producer.OrderProducer;
+import com.example.kafkaorderdemo.service.EventLogService;
 import com.example.kafkaorderdemo.service.OrderStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ class OrderControllerTest {
     @MockitoBean
     private OrderStore orderStore;
 
+    @MockitoBean
+    private EventLogService eventLogService;
+
     @Test
     void createsAndPublishesOrder() throws Exception {
         mockMvc.perform(post("/api/orders")
@@ -56,6 +60,7 @@ class OrderControllerTest {
 
     verify(orderStore).save(argThat(event -> hasOrderDetails(event, "Burger", 2)));
         verify(orderProducer).publishOrder(argThat(event -> hasOrderDetails(event, "Burger", 2)));
+    verify(eventLogService).record(argThat(message -> message.startsWith("REST API received order ")));
     }
 
     @Test

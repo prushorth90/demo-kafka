@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { RefreshCw, Send } from 'lucide-react'
+import { Activity, RefreshCw, Send } from 'lucide-react'
 import './App.css'
 
-const API_URL = 'http://localhost:8080/api/orders'
+const API_BASE_URL = 'http://localhost:8080/api'
 
 type OrderStatus = 'RECEIVED' | 'PROCESSING' | 'COMPLETED'
 
@@ -14,8 +14,14 @@ type Order = {
   status: OrderStatus
 }
 
+type EventLogEntry = {
+  id: number
+  timestamp: number
+  message: string
+}
+
 async function requestOrders(): Promise<Order[]> {
-  const response = await fetch(API_URL)
+  const response = await fetch(`${API_BASE_URL}/orders`)
 
   if (!response.ok) {
     throw new Error('Could not load orders')
@@ -24,10 +30,21 @@ async function requestOrders(): Promise<Order[]> {
   return response.json() as Promise<Order[]>
 }
 
+async function requestEvents(): Promise<EventLogEntry[]> {
+  const response = await fetch(`${API_BASE_URL}/events`)
+
+  if (!response.ok) {
+    throw new Error('Could not load events')
+  }
+
+  return response.json() as Promise<EventLogEntry[]>
+}
+
 function App() {
   const [item, setItem] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [orders, setOrders] = useState<Order[]>([])
+  const [events, setEvents] = useState<EventLogEntry[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,11 +52,15 @@ function App() {
   useEffect(() => {
     let isActive = true
 
-    const loadOrders = async () => {
+    const loadDashboard = async () => {
       try {
-        const latestOrders = await requestOrders()
+        const [latestOrders, latestEvents] = await Promise.all([
+          requestOrders(),
+          requestEvents(),
+        ])
         if (isActive) {
           setOrders(latestOrders)
+          setEvents([...latestEvents].reverse())
           setError(null)
         }
       } catch {
@@ -53,8 +74,8 @@ function App() {
       }
     }
 
-    void loadOrders()
-    const pollingId = window.setInterval(loadOrders, 2_000)
+    void loadDashboard()
+    const pollingId = window.setInterval(loadDashboard, 2_000)
 
     return () => {
       isActive = false
@@ -68,7 +89,7 @@ function App() {
     setError(null)
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_BASE_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ item: item.trim(), quantity }),
@@ -80,7 +101,12 @@ function App() {
 
       setItem('')
       setQuantity(1)
-      setOrders(await requestOrders())
+      const [latestOrders, latestEvents] = await Promise.all([
+        requestOrders(),
+        requestEvents(),
+      ])
+      setOrders(latestOrders)
+      setEvents([...latestEvents].reverse())
     } catch {
       setError('The order could not be placed. Check the details and try again.')
     } finally {
@@ -179,6 +205,33 @@ function App() {
           )}
           {isLoading && orders.length === 0 && (
             <div className="empty-state">Loading orders...</div>
+          )}
+        </div>
+      </section>
+
+      <section className="event-flow-section" aria-labelledby="event-flow-title">
+        <div className="section-heading event-flow-heading">
+          <div>
+            <span className="section-number">03</span>
+            <h2 id="event-flow-title">Event Flow</h2>
+          </div>
+          <Activity size={18} aria-hidden="true" />
+        </div>
+
+        <div className="event-log" aria-live="polite">
+          {events.length > 0 ? (
+            <ol>
+              {events.map((event) => (
+                <li key={event.id}>
+                  <time dateTime={new Date(event.timestamp).toISOString()}>
+                    {new Date(event.timestamp).toLocaleTimeString()}
+                  </time>
+                  <span>{event.message}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="event-empty">Events will appear here when an order is placed.</div>
           )}
         </div>
       </section>
