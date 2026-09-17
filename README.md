@@ -33,6 +33,10 @@ docker compose ps
 
 The `kafka` service should have a status of `Up` and expose port `9092`. The Spring Boot application connects to it at `localhost:9092`.
 
+## Inspect Kafka
+
+Open the Kafka UI at `http://localhost:8085` after starting Docker Compose. While placing orders through the React frontend, inspect the `orders.created` topic and its messages, then open the `order-processing-group` consumer group to see the consumer connected to that topic.
+
 ## Run the application
 
 ```bash
